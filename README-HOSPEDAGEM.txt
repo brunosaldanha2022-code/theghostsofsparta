@@ -1,10 +1,13 @@
-GOW TATICAS OSM - V27
+THE GHOSTS OF SPARTA V29
 
-Atualizacoes desta versao:
-- Area de membros adaptada para celular.
-- Data de criacao da conta agora e digitada manualmente no formato DD/MM/AAAA (sem calendario) e pode ser editada.
-- Historico de ligas/campeoes mantido.
-- Botao para baixar o PDF atualizado dos rankings de campeoes.
-- PDF dos rankings gerado em formato A4 com 2 paginas e sem dependencia externa.
+ATUALIZAÇÃO
+- Restaurada a área completa de Pontos de batalhas.
+- Cadastro/edição/exclusão de grupos.
+- Cadastro/edição/exclusão de treinadores e pontos.
+- Rankings separados dos grupos A e B.
+- Botão de baixar PDF individual dos treinadores.
+- Botão de visualizar/imprimir PDF.
+- Mantida a sincronização Firebase já existente.
 
-Para hospedar: envie todos os arquivos desta pasta mantendo a estrutura.
+NETLIFY
+Envie os arquivos desta versão para o mesmo repositório GitHub ligado ao site atual.
