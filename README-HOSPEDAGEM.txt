@@ -1,12 +1,10 @@
-GOW Táticas OSM - V21
+GOW TATICAS OSM - V27
 
-Versão preparada para Cloudflare Drop / hospedagem gratuita.
+Atualizacoes desta versao:
+- Area de membros adaptada para celular.
+- Data de criacao da conta agora e digitada manualmente no formato DD/MM/AAAA (sem calendario) e pode ser editada.
+- Historico de ligas/campeoes mantido.
+- Botao para baixar o PDF atualizado dos rankings de campeoes.
+- PDF dos rankings gerado em formato A4 com 2 paginas e sem dependencia externa.
 
-Importante: o PDF manual foi otimizado para reduzir o ZIP abaixo do limite de 25 MB do Cloudflare Drop. A qualidade foi reduzida de forma moderada para web/celular.
-
-Arquivo principal: index.html
-PDF: downloads/GOW_Taticas_OSM_Manual_Completo.pdf
-
-No Cloudflare Drop, use Browse zips e selecione este ZIP.
-
-V22: index.html fica na raiz para compatibilidade com Cloudflare Drop. Imagens embutidas foram externalizadas para assets/.
+Para hospedar: envie todos os arquivos desta pasta mantendo a estrutura.
