@@ -1,0 +1,7 @@
+THE GHOSTS OF SPARTA — VERSÃO SEM NUVEM
+
+A sincronização Firebase/Firestore foi removida. Os dados são guardados localmente neste navegador.
+
+Para transferir dados: abra Backup e sincronização por código, gere um código no dispositivo de origem e aplique-o no dispositivo de destino. Também pode baixar/importar um arquivo JSON de backup.
+
+Importante: código/backup é transferência manual; não há sincronização automática entre dispositivos. O código de administrador local continua sendo solicitado para editar. Teste o fluxo antes de usar dados oficiais.
