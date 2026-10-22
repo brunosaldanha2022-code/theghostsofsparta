@@ -52,7 +52,7 @@ function mobileGoHome(){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function showPage(name){updateMobileNav(name);document.querySelectorAll('.page').forEach(x=>x.classList.remove('active')); let p=$('page-'+name); if(p)p.classList.add('active'); document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.page===name)); window.scrollTo({top:0,behavior:'smooth'}); if(name==='membros')renderMembers(); if(name==='ligas')renderLeagues(); if(name==='inscricoes')renderInscricoes(); if(name==='sorteio')renderSorteioTimes(); if(name==='batalhas'){renderBattleGroups();renderBattleManagers();} if(name==='alinhamentos'){renderLineupDraft();refreshLineupTrainerOptions();renderLineups();} if(name==='category')renderCategory();}
+function showPage(name){updateMobileNav(name);document.querySelectorAll('.page').forEach(x=>x.classList.remove('active')); let p=$('page-'+name); if(p)p.classList.add('active'); document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.page===name)); window.scrollTo({top:0,behavior:'smooth'}); if(name==='membros')renderMembers(); if(name==='ligas')renderLeagues(); if(name==='inscricoes')renderInscricoes(); if(name==='sorteio')renderSorteioTimes(); if(name==='batalhas'){renderBattleGroups();renderBattleManagers();renderBattleEvolution();} if(name==='alinhamentos'){renderLineupDraft();refreshLineupTrainerOptions();renderLineups();} if(name==='category')renderCategory();}
 function openCategory(cat){currentCat=cat; $('catTitle').textContent=LABELS[cat]; $('catSub').textContent=categorySummary(cat); $('categoryPdfDownload').href=PDFS[cat]; renderCategory(); showPage('category');}
 function categorySummary(cat){return ({combater:'Como combater formações e estilos no OSM',ofensivas:'Formações ofensivas: 4-3-3 A/B',medias:'Formações médias / equilibradas: 4-4-2 A/B • 4-5-1 • 4-2-3-1',defensivas:'Formações defensivas: 5-4-1 A/B • 5-3-1-1 / 5-3-2 • 5-2-3 A/B'})[cat]||''}
 async function renderCategory(filter=''){
@@ -406,8 +406,14 @@ function addLineupPlayer(e){
   $('lpGroup').value=group;
   updateLineupTrainerInfo();
 }
+function setLineupCaptain(i){lineupDraft.forEach((p,j)=>{p.isCaptain=(i===j);});renderLineupDraft();}
+function moverTreinadorAlinhamento(i,delta){
+ const destino=i+delta;if(destino<0||destino>=lineupDraft.length)return;
+ [lineupDraft[i],lineupDraft[destino]]=[lineupDraft[destino],lineupDraft[i]];
+ renderLineupDraft();
+}
 function removeLineupPlayer(i){lineupDraft.splice(i,1);renderLineupDraft();}
-function renderLineupDraft(){const el=$('lineupDraft');if(!el)return;el.innerHTML=lineupDraft.length?lineupDraft.map((x,i)=>`<article class="card"><div><strong>${i+1} — ${esc(x.trainer)}</strong><div class="muted">Nível ${esc(x.level)} • ${fmtPoints(x.points)} pontos • ${esc(x.group)}</div></div><button class="btn danger small" onclick="removeLineupPlayer(${i})">Excluir</button></article>`).join(''):'<div class="empty">Nenhum treinador adicionado.</div>';updateCloseLineupButton(); }
+function renderLineupDraft(){const el=$('lineupDraft');if(!el)return;el.innerHTML=lineupDraft.length?lineupDraft.map((x,i)=>`<article class="card"><div><strong style="${x.isCaptain?'color:#cf142b':''}">${i+1} — ${esc(x.trainer)} ${x.isCaptain?'(C)':''}</strong><div class="muted">Nível ${esc(x.level)} • ${fmtPoints(x.points)} pontos • ${esc(x.group)}</div></div><button class="btn small" type="button" onclick="setLineupCaptain(${i})">${x.isCaptain?'★ Capitão':'Escolher capitão'}</button><button class="btn small" type="button" onclick="moverTreinadorAlinhamento(${i},-1)" ${i===0?'disabled':''}>⬆️ Subir</button><button class="btn small" type="button" onclick="moverTreinadorAlinhamento(${i},1)" ${i===lineupDraft.length-1?'disabled':''}>⬇️ Descer</button><button class="btn danger small" onclick="removeLineupPlayer(${i})">Excluir</button></article>`).join(''):'<div class="empty">Nenhum treinador adicionado.</div>';updateCloseLineupButton(); }
 function getGroupLineups(group){
   return loadJSON('gow_battle_lineups',[]).filter(x=>normalizeLineupGroup(x)===group);
 }
@@ -459,7 +465,17 @@ function newLineup(group='THE GHOSTS OF SPARTA'){
 function editLineup(id){const x=loadJSON('gow_battle_lineups',[]).find(x=>String(x.id)===String(id));if(!x)return;const group=normalizeLineupGroup(x);currentLineupId=String(id);$('luId').value=x.id;$('luName').value=x.name||'';$('luDate').value=x.date||'';$('luGroup').value=group;lineupDraft=(x.players||[]).filter(p=>(p.group||group)===group).map(p=>({...p,group}));setLineupGroup(group);renderLineupDraft();updateCloseLineupButton();document.getElementById('page-alinhamentos').scrollIntoView({behavior:'smooth'});toast('Alinhamento aberto para edição. Feche novamente para salvar automaticamente.');}
 function deleteLineup(id){if(!confirm('Excluir este alinhamento?'))return;saveJSON('gow_battle_lineups',loadJSON('gow_battle_lineups',[]).filter(x=>String(x.id)!==String(id)));if(String(currentLineupId)===String(id)){newLineup($('luGroup')?.value||'THE GHOSTS OF SPARTA');}renderLineups();toast('Alinhamento excluído.');}
 function selectLineup(id){const x=loadJSON('gow_battle_lineups',[]).find(x=>String(x.id)===String(id));if(!x)return;const group=normalizeLineupGroup(x);currentLineupId=String(id);lineupDraft=(x.players||[]).filter(p=>(p.group||group)===group).map(p=>({...p,group}));$('luId').value=x.id;$('luName').value=x.name||'';$('luDate').value=x.date||'';$('luGroup').value=group;setLineupGroup(group);renderLineupDraft();updateCloseLineupButton();toast('Alinhamento selecionado: '+group+'.');}
-function lineupCard(x){const num=String(x.number||0);const title=num?`Alinhamento ${num.padStart(2,'0')}`:(x.name||'Alinhamento');return `<article class="card"><div><strong>${esc(title)}</strong><div class="muted">${esc(x.group||'')} • ${(x.players||[]).length}/5 treinadores${x.date?` • ${esc(x.date)}`:''}</div></div><div class="card-actions"><button class="btn small" onclick="selectLineup('${String(x.id)}')">📋 Abrir</button><button class="btn small" onclick="editLineup('${String(x.id)}')">✏️ Editar</button><button class="btn small" onclick="viewLineupPDF('${String(x.id)}')">👁️ Visualizar PDF</button><button class="btn small" onclick="shareLineupPDF('${String(x.id)}')">📤 Compartilhar PDF</button><button class="btn primary small" onclick="downloadLineupPDF('${String(x.id)}')">⬇️ Baixar PDF</button><button class="btn danger small" onclick="deleteLineup('${String(x.id)}')">🗑️ Excluir</button></div></article>`;}
+
+function resultadoBatalhaLabel(v){return v==='vitoria'?'🏆 Vitória':v==='derrota'?'❌ Derrota':'⏳ Não informado';}
+function definirResultadoBatalha(id,resultado){
+ if(!['','vitoria','derrota'].includes(resultado))return;
+ const all=loadJSON('gow_battle_lineups',[]);
+ const item=all.find(x=>String(x.id)===String(id));if(!item)return;
+ item.battleResult=resultado;item.updated=Date.now();
+ try{localStorage.setItem('gow_battle_lineups',JSON.stringify(all));renderLineups();toast('Resultado da batalha salvo.');}
+ catch(err){console.error(err);alert('Não foi possível salvar o resultado. Verifique o espaço disponível.');}
+}
+function lineupCard(x){const num=String(x.number||0);const title=num?`Alinhamento ${num.padStart(2,'0')}`:(x.name||'Alinhamento');return `<article class="card"><div><strong>${esc(title)}</strong><div class="muted">${esc(x.group||'')} • ${(x.players||[]).length}/5 treinadores${x.date?` • ${esc(x.date)}`:''}</div></div><div style="margin-top:12px"><label style="display:block;margin-bottom:6px"><b>Resultado da batalha</b></label><select class="input" aria-label="Resultado da batalha" onchange="definirResultadoBatalha('${String(x.id)}',this.value)"><option value="" ${!x.battleResult?'selected':''}>⏳ Não informado</option><option value="vitoria" ${x.battleResult==='vitoria'?'selected':''}>🏆 Vitória</option><option value="derrota" ${x.battleResult==='derrota'?'selected':''}>❌ Derrota</option></select><div class="muted" style="margin-top:8px">${resultadoBatalhaLabel(x.battleResult)}</div></div><div class="card-actions"><button class="btn small" onclick="gerarPDFResultadoBatalha('${String(x.id)}','visualizar')">👁️ Resultado PDF</button><button class="btn small" onclick="gerarPDFResultadoBatalha('${String(x.id)}','baixar')">⬇️ Baixar resultado</button><button class="btn small" onclick="gerarPDFResultadoBatalha('${String(x.id)}','compartilhar')">📲 WhatsApp resultado</button><button class="btn small" onclick="selectLineup('${String(x.id)}')">📋 Abrir</button><button class="btn small" onclick="editLineup('${String(x.id)}')">✏️ Editar</button><button class="btn small" onclick="viewLineupPDF('${String(x.id)}')">👁️ Visualizar PDF</button><button class="btn small" onclick="shareLineupPDF('${String(x.id)}')">📤 Compartilhar PDF</button><button class="btn primary small" onclick="downloadLineupPDF('${String(x.id)}')">⬇️ Baixar PDF</button><button class="btn danger small" onclick="deleteLineup('${String(x.id)}')">🗑️ Excluir</button></div></article>`;}
 function renderLineups(){
   const all=loadJSON('gow_battle_lineups',[]);
   const a=all.filter(x=>normalizeLineupGroup(x)==='THE GHOSTS OF SPARTA').sort((x,y)=>(x.number||99)-(y.number||99));
@@ -491,11 +507,66 @@ function buildLineupPDF(x){
  players.forEach((p,i)=>{
   const name=String(p.trainer||'-').replace(/[ΩΩ]/g,'Omega').replace(/[º°]/g,'o').replace(/[–—]/g,'-');const level=String(formatTrainerLevel(p.level));
   text(43,ys[i],14,`${i+1}.`,true,accent);
-  text(105,ys[i],name.length>25?9:11,name.slice(0,36),true);
+  if(p.isCaptain){
+    lines.push(`0.8 0.05 0.12 rg 105 ${ys[i]-5} 17 17 re f`);
+    text(109,ys[i],11,'C',true,'1 1 1');
+    text(130,ys[i],name.length>23?9:11,name.slice(0,32),true,'0.8 0.05 0.12');
+  }else{text(105,ys[i],name.length>25?9:11,name.slice(0,36),true);}
   text(295,ys[i],level.length>21?9:11,level.slice(0,27));
   text(502,ys[i],12,fmtPoints(p.points),true);
  });
- return makeSimplePDF([{imageBehind:true,content:lines.join('\n'),images:[{name:'LineupBg',dataUrl:blue?SPARTA_CLEAN_LINEUP_TEMPLATE_B:SPARTA_CLEAN_LINEUP_TEMPLATE_A,x:0,y:0,w:595,h:842,pixelWidth:768,pixelHeight:1024}]}]);
+ const background={name:'LineupBg',dataUrl:blue?SPARTA_CLEAN_LINEUP_TEMPLATE_B:SPARTA_CLEAN_LINEUP_TEMPLATE_A,x:0,y:0,w:595,h:842,pixelWidth:768,pixelHeight:1024};
+ if(!x._includeBattleResult){
+   return makeSimplePDF([{imageBehind:true,content:lines.join('\n'),images:[background]}]);
+ }
+ // A folha do alinhamento permanece exatamente igual na parte superior.
+ // Só o PDF de resultado ganha uma extensão INFERIOR, na mesma página.
+ const victory=x.battleResult==='vitoria',defeat=x.battleResult==='derrota';
+ const status=victory?'VITÓRIA':defeat?'DERROTA':'RESULTADO PENDENTE';
+ const panelColor=victory?'0.07 0.43 0.23':defeat?'0.70 0.09 0.15':'0.30 0.33 0.39';
+ const message=victory?
+  ['PARABÉNS, GUERREIROS DE SPARTA!',
+   'A dedicação, a união e a força de cada treinador',
+   'foram fundamentais para conquistar esta vitória.',
+   'Vocês honraram nosso grupo!']:
+  defeat?
+  ['GUERREIROS DE SPARTA, CABEÇA ERGUIDA!',
+   'Uma derrota não apaga a coragem de quem lutou.',
+   'Aprendam com esta batalha e voltem ainda mais fortes.',
+   'A próxima vitória começa agora!']:
+  ['RESULTADO AINDA NÃO INFORMADO',
+   'Selecione Vitória ou Derrota no alinhamento',
+   'para registrar o resultado oficial da batalha.'];
+ const offset=245, extra=[];
+ const label=(px,py,size,value,b=false,color='0.09 0.12 0.20')=>
+   extra.push(`${color} rg BT /F${b?2:1} ${size} Tf 1 0 0 1 ${px} ${py} Tm (${pdfSafeText(value)}) Tj ET`);
+ // Conteúdo do alinhamento deslocado junto com a arte, sem mudar suas posições relativas.
+ extra.push('1 1 1 rg 0 0 595 245 re f');
+ extra.push(`${panelColor} rg 0 179 595 66 re f`);
+ label(39,217,13,'RESULTADO OFICIAL DA BATALHA',true,'1 1 1');
+ label(39,190,23,status,true,'1 1 1');
+ message.forEach((line,i)=>label(39,148-i*29,i===0?14:12,line,i===0));
+ label(39,14,10,'THE GHOSTS OF SPARTA  -  FORÇA, UNIÃO E HONRA',true);
+ const pdfContent=`q 1 0 0 1 0 ${offset} cm\n${lines.join('\n')}\nQ\n${extra.join('\n')}`;
+ return makeSimplePDF([{imageBehind:true,pageHeight:842+offset,content:pdfContent,
+  images:[{...background,y:offset}]}]);
+}
+function buildResultadoBatalhaPDF(x){
+  // Reutiliza o PDF oficial do alinhamento: mesma arte, tabela e capitão.
+  return buildLineupPDF({...x,_includeBattleResult:true});
+}
+async function gerarPDFResultadoBatalha(id,acao){
+ const x=getSavedLineup(id);if(!x){toast('Alinhamento nao encontrado.');return;}
+ const file=new File([buildResultadoBatalhaPDF(x)],`Resultado_Batalha_${String(x.number||'00').padStart(2,'0')}_${x.battleResult||'pendente'}.pdf`,{type:'application/pdf'});
+ if(acao==='visualizar'){
+  const url=URL.createObjectURL(file),w=window.open(url,'_blank');
+  if(!w)toast('Permita novas abas para visualizar o PDF.');
+  setTimeout(()=>URL.revokeObjectURL(url),120000);
+ }else if(acao==='compartilhar'){
+  if(typeof compartilharPdfSparta==='function')await compartilharPdfSparta(file);
+  else if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:file.name});
+  else{downloadFile(file);toast('PDF baixado. Anexe o arquivo no WhatsApp.');}
+ }else downloadFile(file);
 }
 function lineupPDFFile(x){const blob=buildLineupPDF(x);const n=(x.number?String(x.number).padStart(2,'0'):'00');return new File([blob],`Alinhamento_${n}_${x.group==='THE GHOSTS OF SPARTA B'?'Sparta_B':'Sparta'}.pdf`,{type:'application/pdf'});}
 function getSavedLineup(id){const x=loadJSON('gow_battle_lineups',[]).find(x=>String(x.id)===String(id));if(!x)return null;const group=normalizeLineupGroup(x);return {...x,group,players:(x.players||[]).filter(p=>(p.group||group)===group)};}
@@ -503,6 +574,7 @@ function viewLineupPDF(id){const x=getSavedLineup(id);if(!x)return;const file=li
 async function shareLineupPDF(id){const x=getSavedLineup(id);if(!x)return;const file=lineupPDFFile(x);try{if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({title:file.name,text:x.name||'Alinhamento',files:[file]});return;}if(navigator.share){await navigator.share({title:file.name,text:x.name||'Alinhamento'});return;}viewLineupPDF(id);toast('O compartilhamento de arquivos não é suportado neste navegador.');}catch(e){if(e?.name!=='AbortError')toast('Não foi possível compartilhar o PDF.');}}
 function printCurrentLineupPDF(){const x=getCurrentLineup();if(x.players.length!==5){toast('Feche o alinhamento com exatamente 5 treinadores.');return;}const blob=buildLineupPDF(x);const url=URL.createObjectURL(blob);window.open(url,'_blank');setTimeout(()=>URL.revokeObjectURL(url),60000);}
 function printLineupPDF(id){viewLineupPDF(id);}
+function compartilharAlinhamentoAtual(){const x=getCurrentLineup();if(x.players.length!==5){toast('Feche o alinhamento com exatamente 5 treinadores.');return;}compartilharPdfSparta(lineupPDFFile(x));}
 function downloadCurrentLineupPDF(){const x=getCurrentLineup();if(x.players.length!==5){toast('Feche o alinhamento com exatamente 5 treinadores.');return;}downloadFile(lineupPDFFile(x));}
 function downloadLineupPDF(id){const x=getSavedLineup(id);if(!x)return;downloadFile(lineupPDFFile(x));}
 
@@ -529,9 +601,14 @@ function addBattleGroup(e){
  e.preventDefault(); const a=loadJSON('gow_battle_groups',[]); const id=Number($('bgId').value||0);
  const item={name:$('bgName').value.trim(),division:$('bgDivision').value,points:parsePoints($('bgPoints').value),updated:Date.now()};
  if(!item.name||!item.division){toast('Preencha todos os dados do grupo.');return;}
- if(id){const x=a.find(x=>x.id===id); if(x)Object.assign(x,item); toast('Todos os dados do grupo foram atualizados!');}
- else {a.push({id:Date.now(),...item});toast('Grupo cadastrado!');}
- saveJSON('gow_battle_groups',a);e.target.reset();$('bgId').value='';renderBattleGroups();
+ if(id){const x=a.find(x=>x.id===id); if(x){
+   const old=Number(x.points)||0,hist=Array.isArray(x.pointHistory)?x.pointHistory.slice():[];
+   if(!hist.length)hist.push({at:x.updated||Date.now(),points:old});
+   if(old!==item.points)hist.push({at:Date.now(),points:item.points});
+   Object.assign(x,item,{pointHistory:hist,previousPoints:old!==item.points?old:x.previousPoints});
+ } toast('Todos os dados do grupo foram atualizados!');}
+ else {a.push({id:Date.now(),...item,pointHistory:[{at:Date.now(),points:item.points}]});toast('Grupo cadastrado!');}
+ saveJSON('gow_battle_groups',a);e.target.reset();$('bgId').value='';renderBattleGroups();renderBattleEvolution();
 }
 function renderBattleGroups(){
   const a=loadJSON('gow_battle_groups',[]).sort((x,y)=>y.points-x.points);
@@ -592,7 +669,7 @@ function addBattleManager(e){
  if(id){const x=a.find(x=>x.id===id); if(x)prepareUpdate(x); toast('Todos os dados do treinador foram atualizados!');}
  else {const existing=a.find(x=>x.nick.toLowerCase()===item.nick.toLowerCase()&&x.group===item.group); if(existing){prepareUpdate(existing);toast('Treinador existente atualizado!');}else{item.id=Date.now();item.pointHistory=[{at:item.updated,points}];item.previousPoints=null;item.lastPointChange=0;item.lastPointChangeAt=null;a.push(item);toast('Treinador cadastrado!');}}
  if(!saveJSON('gow_battle_managers',a))return;
- e.target.reset();$('bmId').value='';cancelBattleManagerEdit(false);renderBattleManagers();
+ e.target.reset();$('bmId').value='';cancelBattleManagerEdit(false);renderBattleManagers();renderBattleEvolution();
 }
 function renderBattleManagers(){
   const all=loadJSON('gow_battle_managers',[]);
@@ -619,6 +696,101 @@ function renderBattleManagers(){
   $('battleManagersListA').innerHTML=render('THE GHOSTS OF SPARTA','red')||`<div class="empty">Nenhum treinador cadastrado neste grupo.</div>`;
   $('battleManagersListB').innerHTML=render('THE GHOSTS OF SPARTA B','blue')||`<div class="empty">Nenhum treinador cadastrado neste grupo.</div>`;
 }
+
+// Histórico de evolução: usa os registros de alterações salvos no navegador.
+function spartaEvolutionHistory(x){
+ const hist=Array.isArray(x.pointHistory)?x.pointHistory.filter(p=>Number.isFinite(Number(p.points))):[];
+ const out=hist.map(p=>({at:Number(p.at)||0,points:Number(p.points)||0})).sort((a,b)=>a.at-b.at);
+ const current=Number(x.points)||0;
+ if(!out.length)out.push({at:Number(x.updated)||Date.now(),points:current});
+ else if(out[out.length-1].points!==current)out.push({at:Number(x.updated)||Date.now(),points:current});
+ return out;
+}
+function spartaEvolutionChange(x){
+ const h=spartaEvolutionHistory(x),first=h[0].points,last=h[h.length-1].points;
+ return {history:h,first,last,diff:last-first,percent:first?((last-first)/first)*100:null};
+}
+function spartaEvolutionRows(){
+ const groups=loadJSON('gow_battle_groups',[]);
+ const trainers=loadJSON('gow_battle_managers',[]);
+ return {groups,trainers};
+}
+function spartaEvolutionLine(x){
+ const h=spartaEvolutionHistory(x);
+ const w=300,hh=64,pad=8,values=h.map(p=>p.points),lo=Math.min(...values),hi=Math.max(...values),span=Math.max(1,hi-lo);
+ const pts=h.map((p,i)=>`${pad+(i/Math.max(1,h.length-1))*(w-2*pad)},${hh-pad-((p.points-lo)/span)*(hh-2*pad)}`).join(' ');
+ return `<svg viewBox="0 0 ${w} ${hh}" role="img" aria-label="Gráfico de pontos" style="width:100%;height:65px"><polyline points="${pts}" fill="none" stroke="#d7aa56" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${h.map((p,i)=>`<circle cx="${pad+(i/Math.max(1,h.length-1))*(w-2*pad)}" cy="${hh-pad-((p.points-lo)/span)*(hh-2*pad)}" r="3.5" fill="#f0d38d"/>`).join('')}</svg>`;
+}
+function renderBattleEvolution(){
+ const target=document.getElementById('spartaEvolutionContent');if(!target)return;
+ const {groups,trainers}=spartaEvolutionRows();
+ const card=(x,label)=>{
+  const e=spartaEvolutionChange(x),diff=e.diff,sign=diff>0?'+':diff<0?'-':'';
+  const date=e.history.length>1?new Date(e.history[e.history.length-1].at).toLocaleDateString('pt-BR'):'Sem alterações registradas';
+  return `<article class="card" style="padding:16px;min-width:0">
+   <strong>${esc(label)}</strong><div class="muted">${fmtPoints(e.last)} pontos atuais</div>
+   <div style="font-size:18px;font-weight:800;color:${diff>0?'#75dc9b':diff<0?'#ff8e8e':'#d7c8a6'}">${sign}${fmtPoints(Math.abs(diff))} pontos ${e.percent===null?'':`(${e.percent>=0?'+':''}${e.percent.toFixed(1)}%)`}</div>
+   ${spartaEvolutionLine(x)}<div class="muted">Inicial: ${fmtPoints(e.first)} • Registros: ${e.history.length} • ${esc(date)}</div>
+  </article>`;
+ };
+ const groupCards=groups.map(x=>card(x,x.name||'Grupo')).join('')||'<p class="muted">Nenhum grupo cadastrado.</p>';
+ const trainerCards=trainers.slice().sort((a,b)=>String(a.group).localeCompare(String(b.group))||String(a.nick).localeCompare(String(b.nick)))
+   .map(x=>card(x,`${x.nick||'Treinador'} — ${x.group||'THE GHOSTS OF SPARTA'}`)).join('')||'<p class="muted">Nenhum treinador cadastrado.</p>';
+ target.innerHTML=`<h3>🏆 Evolução dos grupos</h3><div class="sparta-evolution-grid">${groupCards}</div>
+ <h3 style="margin-top:22px">👤 Evolução dos treinadores</h3><div class="sparta-evolution-grid">${trainerCards}</div>`;
+}
+function spartaEvolutionPDF(){
+ const {groups,trainers}=spartaEvolutionRows();
+ const items=[
+  ...groups.map(x=>({kind:'GRUPO',name:x.name||'Grupo',group:'',x})),
+  ...trainers.map(x=>({kind:'TREINADOR',name:x.nick||'Treinador',group:x.group||'THE GHOSTS OF SPARTA',x}))
+ ];
+ const perPage=9,total=Math.max(1,Math.ceil(items.length/perPage)),pages=[];
+ const line=(x,y,sz,str,b=false,color='0.13 0.17 0.23')=>
+  `${color} rg BT /F${b?2:1} ${sz} Tf 1 0 0 1 ${x} ${y} Tm (${pdfSafeText(str)}) Tj ET`;
+ const cut=(v,n)=>{const t=String(v??'');return t.length>n?t.slice(0,n-3)+'...':t;};
+ const points=v=>fmtPoints(Number(v)||0);
+ for(let pg=0;pg<total;pg++){
+  const L=['1 1 1 rg 0 0 595 842 re f',
+    '0.10 0.13 0.20 rg 0 722 595 120 re f',
+    '0.77 0.13 0.17 rg 0 715 595 7 re f'];
+  L.push(line(34,801,20,'THE GHOSTS OF SPARTA',true,'1 1 1'));
+  L.push(line(34,773,16,'RELATORIO DE EVOLUCAO',true,'1 1 1'));
+  L.push(line(34,747,10,`PONTOS DE BATALHAS  |  ${new Date().toLocaleDateString('pt-BR')}`,false,'1 1 1'));
+  L.push('0.91 0.92 0.94 rg 30 666 535 38 re f');
+  L.push(line(42,680,10,'GRUPO / TREINADOR',true));
+  L.push(line(313,680,10,'INICIAL',true));
+  L.push(line(385,680,10,'ATUAL',true));
+  L.push(line(464,680,10,'DIFERENCA',true));
+  const slice=items.slice(pg*perPage,(pg+1)*perPage);
+  slice.forEach((item,i)=>{
+   const top=656-i*62,mid=top-24,e=spartaEvolutionChange(item.x);
+   if(i%2===0)L.push(`0.965 0.970 0.978 rg 30 ${top-55} 535 60 re f`);
+   L.push(line(42,top-10,8,item.kind,true,'0.43 0.25 0.25'));
+   L.push(line(42,mid,11,cut(item.name,34),true));
+   if(item.group)L.push(line(42,mid-15,8,cut(item.group,40)));
+   L.push(line(313,mid,10,cut(points(e.first),11)));
+   L.push(line(385,mid,10,cut(points(e.last),11),true));
+   const diff=`${e.diff>0?'+':''}${points(e.diff)}`;
+   L.push(line(464,mid,10,cut(diff,13),true,
+    e.diff>0?'0.05 0.43 0.22':e.diff<0?'0.70 0.08 0.13':'0.23 0.26 0.31'));
+  });
+  L.push('0.82 0.84 0.88 rg 30 77 535 1 re f');
+  L.push(line(34,61,9,'Historico: a evolucao considera alteracoes registradas no site.'));
+  L.push(line(34,46,9,'Dados anteriores ao historico nao possuem variacao comprovada.'));
+  L.push(line(34,25,9,`TOTAL: ${groups.length} grupo(s)  |  ${trainers.length} treinador(es)`));
+  L.push(line(494,25,9,`Pagina ${pg+1}/${total}`,true));
+  pages.push({content:L.join('\n'),images:[]});
+ }
+ return makeSimplePDF(pages);
+}
+function spartaEvolutionPdfAction(action){
+ const file=new File([spartaEvolutionPDF()],`Relatorio_Evolucao_Sparta_${new Date().toISOString().slice(0,10)}.pdf`,{type:'application/pdf'});
+ if(action==='download')downloadFile(file);
+ else if(action==='share'&&typeof compartilharPdfSparta==='function')compartilharPdfSparta(file);
+ else {const url=URL.createObjectURL(file);const w=window.open(url,'_blank');if(!w)toast('Permita pop-ups para visualizar o PDF.');setTimeout(()=>URL.revokeObjectURL(url),120000);}
+}
+
 function pdfWinAnsi(text){
   const map={'á':0xE1,'à':0xE0,'â':0xE2,'ã':0xE3,'ä':0xE4,'ç':0xE7,'é':0xE9,'ê':0xEA,'ë':0xEB,'í':0xED,'ï':0xEF,'ó':0xF3,'ô':0xF4,'õ':0xF5,'ö':0xF6,'ú':0xFA,'ü':0xFC,'Á':0xC1,'À':0xC0,'Â':0xC2,'Ã':0xC3,'Ä':0xC4,'Ç':0xC7,'É':0xC9,'Ê':0xCA,'Ë':0xCB,'Í':0xCD,'Ï':0xCF,'Ó':0xD3,'Ô':0xD4,'Õ':0xD5,'Ö':0xD6,'Ú':0xDA,'Ü':0xDC,'º':0xBA,'ª':0xAA,'–':0x96,'—':0x97,'•':0x95};
   let out=''; for(const ch of String(text??'')){const c=map[ch]??ch.charCodeAt(0); out+=String.fromCharCode(c<=255?c:0x3F);} return out.replace(/([\\()])/g,'\\$1').replace(/\r?\n/g,' ');
@@ -710,7 +882,7 @@ function makeSimplePDF(pages){
     const page=addObj('');const cont=addObj('');pageRefs.push(page);contentRefs.push(cont);
     const xobj=imageRefs.length?` /XObject << ${imageRefs.map(x=>`/${x.name} ${x.ref} 0 R`).join(' ')} >>`:'';
     const bytes=enc(content);objs[cont-1]=`<< /Length ${bytes.length} >>\nstream\n${content}\nendstream`;
-    objs[page-1]=`<< /Type /Page /Parent ${pagesObj} 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 ${font} 0 R /F2 ${bold} 0 R >>${xobj} >> /Contents ${cont} 0 R >>`;
+    objs[page-1]=`<< /Type /Page /Parent ${pagesObj} 0 R /MediaBox [0 0 ${W} ${spec.pageHeight||H}] /Resources << /Font << /F1 ${font} 0 R /F2 ${bold} 0 R >>${xobj} >> /Contents ${cont} 0 R >>`;
   });
   objs[catalog-1]=`<< /Type /Catalog /Pages ${pagesObj} 0 R >>`;objs[pagesObj-1]=`<< /Type /Pages /Kids [${pageRefs.map(n=>n+' 0 R').join(' ')}] /Count ${pageRefs.length} >>`;
   const header=enc('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n'),chunks=[header],offsets=[0];let pos=header.length;
@@ -780,6 +952,8 @@ function buildTitlesRankingPDF(){
   });
   return makeSimplePDF(pages);
 }
+function viewTitlesRankingPDF(){const blob=buildTitlesRankingPDF();const url=URL.createObjectURL(blob);const w=window.open(url,'_blank');if(!w)toast('Permita pop-ups para visualizar o PDF.');setTimeout(()=>URL.revokeObjectURL(url),120000);}
+function compartilharRankingTitulos(){compartilharPdfSparta(new File([buildTitlesRankingPDF()],'GOW_Rankings_Campeoes.pdf',{type:'application/pdf'}));}
 function downloadTitlesRankingPDF(){const blob=buildTitlesRankingPDF();downloadFile(new File([blob],'GOW_Rankings_Campeoes.pdf',{type:'application/pdf'}));toast('PDF dos rankings baixado!');}
 function rankingPrintHTML(group){
   const rows=getRankingRows(group);
@@ -811,8 +985,9 @@ function printRanking(group,action){
 }
 function pdfAction(group,action){printRanking(group,action);}
 function downloadIndividualPDF(group){const blob=makeRankingPDF(group);downloadFile(new File([blob],pdfFileName(group),{type:'application/pdf'}));toast('PDF dos treinadores baixado!');}
-function openRankingPDF(group){printRanking(group,'open');}
-function shareIndividualPDF(group){printRanking(group,'share');}
+function openRankingPDF(group){const blob=makeRankingPDF(group);const url=URL.createObjectURL(blob);const w=window.open(url,'_blank');if(!w)toast('Permita pop-ups para visualizar o PDF.');setTimeout(()=>URL.revokeObjectURL(url),120000);}
+function compartilharRankingIndividual(group){compartilharPdfSparta(new File([makeRankingPDF(group)],pdfFileName(group),{type:'application/pdf'}));}
+function shareIndividualPDF(group){compartilharRankingIndividual(group);}
 function printIndividualRanking(group){printRanking(group,'open');}
 function downloadFile(file){
   const url=URL.createObjectURL(file),a=document.createElement('a');

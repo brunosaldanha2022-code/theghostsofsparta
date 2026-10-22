@@ -1604,6 +1604,8 @@ body:not(.admin-unlocked) form[onsubmit]{display:none!important}
 .battle-evolution.same,.battle-points-change.same{color:#aeb2ba}
 .battle-points-change{margin-top:4px;font-size:10px;font-weight:800;white-space:nowrap}
 @media(max-width:700px){.battle-evolution{font-size:10px}.battle-points-change{font-size:9px}}
+
+.sparta-evolution-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:12px}
 </style>
 
 <style id="sparta-ranking-tabs-style">
@@ -1696,7 +1698,7 @@ body:not(.admin-unlocked) form[onsubmit]{display:none!important}
 <div class="card"><h3>🛡️ Criar alinhamento</h3><p class="muted">Cada grupo pode ter até <b>4 alinhamentos</b>. Cada alinhamento é fechado automaticamente com exatamente <b>5 treinadores</b>.</p><input id="luId" type="hidden"><input id="luName" type="hidden"><input id="luDate" type="hidden"><div class="card-actions"><button class="btn" type="button" onclick="newLineup($('luGroup').value)">➕ Criar alinhamento</button><button id="closeLineupBtn" class="btn primary" type="button" onclick="closeLineup()" disabled>✅ Fechar alinhamento (0/5)</button></div></div>
 <div class="card"><h3>🔴 Alinhamentos — THE GHOSTS OF SPARTA</h3><div id="lineupsListA" class="cards"></div></div>
 <div class="card"><h3>🔵 Alinhamentos — THE GHOSTS OF SPARTA B</h3><div id="lineupsListB" class="cards"></div></div>
-<div class="card"><div class="card-actions"><button class="btn primary" onclick="printCurrentLineupPDF()">📄 Visualizar / Salvar PDF</button><button class="btn small" onclick="downloadCurrentLineupPDF()">⬇️ Baixar PDF</button><button class="btn small" onclick="clearLineupDraft()">🗑️ Limpar alinhamento atual</button></div></div></section>
+<div class="card"><div class="card-actions"><button class="btn primary" onclick="printCurrentLineupPDF()">📄 Visualizar / Salvar PDF</button><button class="btn small" onclick="downloadCurrentLineupPDF()">⬇️ Baixar PDF</button><button class="btn small" onclick="compartilharAlinhamentoAtual()">📲 Compartilhar WhatsApp</button><button class="btn small" onclick="clearLineupDraft()">🗑️ Limpar alinhamento atual</button></div></div></section>
 
 
 
@@ -1712,12 +1714,15 @@ body:not(.admin-unlocked) form[onsubmit]{display:none!important}
 <section id="page-sorteio" class="page">
 <h2 class="section-title">🎲 Sorteio dos Times da Liga</h2><p class="section-sub">Use os treinadores confirmados nas inscrições e sorteie um clube exclusivo para cada participante.</p>
 <div class="card"><label><strong>Escolher liga e edição</strong><br><select id="sortLiga" class="input" onchange="renderSorteioDetalhes()" style="max-width:480px;width:100%"></select></label><div id="sortInfo" style="margin-top:14px"></div></div>
-<div class="card" style="margin-top:16px"><h3>⚽ Times do campeonato</h3><p class="muted">Digite um time por linha. É necessário ter exatamente a mesma quantidade de times e treinadores.</p><textarea id="sortTimes" class="input" rows="9" style="width:100%;max-width:700px" placeholder="Real Madrid&#10;Barcelona&#10;Manchester City"></textarea><div class="card-actions" style="margin-top:12px"><button class="btn" type="button" onclick="salvarTimesSorteio()">💾 Salvar times</button><button class="btn primary" type="button" onclick="executarSorteioTimes()">🎲 Realizar sorteio</button><button class="btn" type="button" onclick="baixarPdfSorteio()">⬇️ Baixar PDF do sorteio</button></div></div>
+<div class="card" style="margin-top:16px"><h3>⚽ Times do campeonato</h3><p class="muted">Digite um time por linha. É necessário ter exatamente a mesma quantidade de times e treinadores.</p><textarea id="sortTimes" class="input" rows="9" style="width:100%;max-width:700px" placeholder="Real Madrid&#10;Barcelona&#10;Manchester City"></textarea><div class="card-actions" style="margin-top:12px"><button class="btn" type="button" onclick="salvarTimesSorteio()">💾 Salvar times</button><button class="btn primary" type="button" onclick="executarSorteioTimes()">🎲 Realizar sorteio</button><button class="btn" type="button" onclick="baixarPdfSorteio()">⬇️ Baixar PDF do sorteio</button><button class="btn" type="button" onclick="baixarPdfSorteio('visualizar')">👁️ Visualizar PDF</button><button class="btn" type="button" onclick="baixarPdfSorteio('compartilhar')">📲 Compartilhar WhatsApp</button></div></div>
 <div class="card" style="margin-top:16px"><h3>📅 Agendar sorteio e gravar no celular</h3><p class="muted">Escolha a data e a hora. O sorteio só acontece quando você apertar o botão. Grave a tela do celular durante a apresentação.</p><div style="display:flex;gap:12px;flex-wrap:wrap;align-items:end"><label>Data do sorteio<br><input class="input" type="date" id="sortData" style="max-width:190px"></label><label>Hora do sorteio<br><input class="input" type="time" id="sortHora" style="max-width:140px"></label><button class="btn" type="button" onclick="salvarAgendamentoSorteio()">💾 Salvar agendamento</button></div><div id="sortContagem" style="margin-top:14px;font-size:clamp(19px,5vw,29px);font-weight:800;text-align:center" aria-live="off">Defina a data e a hora do sorteio.</div><p class="muted" style="text-align:center">A contagem é exibida no horário local do aparelho. O administrador inicia o sorteio manualmente.</p><div class="card-actions" style="justify-content:center;flex-wrap:wrap"><button class="btn primary" type="button" onclick="iniciarApresentacaoSorteio()">📱 Abrir apresentação para gravação</button></div></div>
 <div id="sortResultado" class="card" style="margin-top:16px"></div>
+<div class="card" style="margin-top:16px"><h3>📚 Histórico dos sorteios</h3>
+<p class="muted">Sorteios anteriores ficam salvos neste aparelho e entram no backup e na sincronização por código.</p>
+<div id="sortHistoricoLista"></div></div>
 </section>
 <section id="page-ligas" class="page"><h2 class="section-title">Histórico das ligas</h2><p class="section-sub">Ranking atual e histórico. <b>Todos os dados exibidos podem ser alterados</b>: campeonato, campeão, grupo, nível, pontos e demais informações.</p>
-<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:0">🏆 Ranking geral de títulos</h3><div class="card-actions"><button class="btn primary small" type="button" onclick="toggleChampionForm()">➕ Novo campeão</button><button class="btn small" type="button" onclick="downloadTitlesRankingPDF()">⬇️ Baixar rankings em PDF</button></div></div><p class="muted" style="margin:8px 0 14px">Cadastre novos campeões e o ranking será atualizado automaticamente.</p><div id="championFormWrap" style="display:none;margin:0 0 16px"><form class="form" onsubmit="addLeagueChampion(event)"><input id="hcId" type="hidden"><select id="hcCategory" required><option value="">Tipo de campeonato</option><option value="Liga">Liga</option><option value="Copa">Copa</option><option value="Torneio">Torneio</option></select><input id="hcLeague" placeholder="Nome da competição (ex.: 10ª Liga Fantasia)" required><input id="hcChampion" placeholder="Nome/Nick do campeão" required><select id="hcGroup"><option value="THE GHOSTS OF SPARTA">THE GHOSTS OF SPARTA</option><option value="THE GHOSTS OF SPARTA B">THE GHOSTS OF SPARTA B</option></select><button class="btn primary full">💾 Salvar campeão da liga</button><button class="btn full" type="button" onclick="toggleChampionForm(false)">Cancelar</button></form></div><div id="titlesRanking" class="cards"></div></div>
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:0">🏆 Ranking geral de títulos</h3><div class="card-actions"><button class="btn primary small" type="button" onclick="toggleChampionForm()">➕ Novo campeão</button><button class="btn small" type="button" onclick="downloadTitlesRankingPDF()">⬇️ Baixar rankings em PDF</button><button class="btn small" type="button" onclick="viewTitlesRankingPDF()">👁️ Visualizar PDF</button><button class="btn small" type="button" onclick="compartilharRankingTitulos()">📲 Compartilhar WhatsApp</button></div></div><p class="muted" style="margin:8px 0 14px">Cadastre novos campeões e o ranking será atualizado automaticamente.</p><div id="championFormWrap" style="display:none;margin:0 0 16px"><form class="form" onsubmit="addLeagueChampion(event)"><input id="hcId" type="hidden"><select id="hcCategory" required><option value="">Tipo de campeonato</option><option value="Liga">Liga</option><option value="Copa">Copa</option><option value="Torneio">Torneio</option></select><input id="hcLeague" placeholder="Nome da competição (ex.: 10ª Liga Fantasia)" required><input id="hcChampion" placeholder="Nome/Nick do campeão" required><select id="hcGroup"><option value="THE GHOSTS OF SPARTA">THE GHOSTS OF SPARTA</option><option value="THE GHOSTS OF SPARTA B">THE GHOSTS OF SPARTA B</option></select><button class="btn primary full">💾 Salvar campeão da liga</button><button class="btn full" type="button" onclick="toggleChampionForm(false)">Cancelar</button></form></div><div id="titlesRanking" class="cards"></div></div>
 <div class="card"><h3>🥇 Ranking das ligas</h3><div id="leagueRanking" class="cards"></div></div>
 <div class="card"><h3>🏆 Ranking das copas</h3><div id="cupRanking" class="cards"></div></div>
 <div class="card"><h3>🏅 Ranking dos torneios</h3><div id="tournamentRanking" class="cards"></div></div>
@@ -1787,7 +1792,7 @@ body:not(.admin-unlocked) form[onsubmit]{display:none!important}
     <div class="group-header red"><div><h3 style="margin:0">🔴 THE GHOSTS OF SPARTA</h3><p class="muted">Ranking individual por pontos de batalha</p></div></div>
     <div class="card-actions" style="margin:12px 0 14px">
       <button class="btn small" type="button" onclick="downloadIndividualPDF('THE GHOSTS OF SPARTA')">⬇️ Baixar PDF dos treinadores</button>
-      <button class="btn small" type="button" onclick="openRankingPDF('THE GHOSTS OF SPARTA')">🖨️ Visualizar PDF</button>
+      <button class="btn small" type="button" onclick="openRankingPDF('THE GHOSTS OF SPARTA')">🖨️ Visualizar PDF</button><button class="btn small" type="button" onclick="compartilharRankingIndividual('THE GHOSTS OF SPARTA')">📲 Compartilhar WhatsApp</button>
     </div>
     <div id="battleManagersListA" class="cards"></div>
   </div>
@@ -1795,12 +1800,23 @@ body:not(.admin-unlocked) form[onsubmit]{display:none!important}
     <div class="group-header blue"><div><h3 style="margin:0">🔵 THE GHOSTS OF SPARTA B</h3><p class="muted">Ranking individual por pontos de batalha</p></div></div>
     <div class="card-actions" style="margin:12px 0 14px">
       <button class="btn small" type="button" onclick="downloadIndividualPDF('THE GHOSTS OF SPARTA B')">⬇️ Baixar PDF dos treinadores</button>
-      <button class="btn small" type="button" onclick="openRankingPDF('THE GHOSTS OF SPARTA B')">🖨️ Visualizar PDF</button>
+      <button class="btn small" type="button" onclick="openRankingPDF('THE GHOSTS OF SPARTA B')">🖨️ Visualizar PDF</button><button class="btn small" type="button" onclick="compartilharRankingIndividual('THE GHOSTS OF SPARTA B')">📲 Compartilhar WhatsApp</button>
     </div>
     <div id="battleManagersListB" class="cards"></div>
   </div>
 </div>
 
+<div class="card" id="spartaEvolutionSection">
+ <h3>📈 Evolução de batalhas — grupos e treinadores</h3>
+ <p class="muted">Acompanhe a evolução dos pontos registrados. O histórico começa a ser guardado a cada alteração; dados antigos sem histórico não são inventados.</p>
+ <div class="card-actions" style="margin:12px 0 16px">
+  <button class="btn primary" type="button" onclick="renderBattleEvolution()">🔄 Atualizar evolução</button>
+  <button class="btn" type="button" onclick="spartaEvolutionPdfAction('view')">👁️ Visualizar relatório PDF</button>
+  <button class="btn" type="button" onclick="spartaEvolutionPdfAction('download')">⬇️ Baixar relatório PDF</button>
+  <button class="btn" type="button" onclick="spartaEvolutionPdfAction('share')">📲 Compartilhar PDF</button>
+ </div>
+ <div id="spartaEvolutionContent"></div>
+</div>
 <div class="card">
   <h3>📌 Como funciona</h3>
   <p class="muted">Os pontos aceitam formatos como 21133, 21.133 ou 21,133. Os dados são salvos no navegador e podem ser transferidos entre dispositivos por código.</p>
@@ -1839,6 +1855,25 @@ body:not(.admin-unlocked) form[onsubmit]{display:none!important}
     </div>
   </div>
 </div>
+<script>async function compartilharPdfSparta(file){
+  try{
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:file.name,text:'THE GHOSTS OF SPARTA — PDF oficial'});
+      return;
+    }
+    if(confirm('Este navegador não permite enviar o PDF diretamente ao WhatsApp. Deseja baixar o arquivo para anexá-lo no WhatsApp?')){
+      downloadFile(file);
+      window.open('https://wa.me/?text='+encodeURIComponent('THE GHOSTS OF SPARTA — PDF oficial'),'_blank','noopener');
+    }
+  }catch(err){if(err.name!=='AbortError'){console.error(err);alert('Não foi possível compartilhar o PDF. Tente baixar e enviar pelo WhatsApp.');}}
+}
+function visualizarPdfSparta(file){
+  const url=URL.createObjectURL(file);
+  const w=window.open(url,'_blank');
+  if(!w){alert('Permita a abertura de novas abas para visualizar o PDF.');}
+  setTimeout(()=>URL.revokeObjectURL(url),120000);
+}
+</script>
 <script src="gow_core.js"></script>
 
 
@@ -1912,7 +1947,7 @@ window.filtrarInscritos=function(){const q=el('insBusca').value.toLocaleLowerCas
 window.mudarInscricao=function(checkbox,key){if(!requireAdmin()){checkbox.checked=!checkbox.checked;return}const list=get(),x=list.find(z=>z.id===el('insEscolha').value);if(!x||x.closed){checkbox.checked=!checkbox.checked;return;}const t=roster().find(t=>t.key===key);if(!t)return;x.participants=(x.participants||[]).filter(p=>p.key!==key);if(checkbox.checked)x.participants.push(t);x.updated=new Date().toISOString();if(put(list))window.renderInscricoes(x.id);};
 window.alternarInscricao=function(){if(!requireAdmin())return;const list=get(),x=list.find(z=>z.id===el('insEscolha').value);if(!x)return;if(!confirm(x.closed?'Reabrir inscrições desta edição?':'Fechar as inscrições desta edição?'))return;x.closed=!x.closed;x.updated=new Date().toISOString();if(put(list))window.renderInscricoes(x.id)};
 window.excluirInscricao=function(){if(!requireAdmin())return;const x=chosen();if(!x||!confirm('Excluir permanentemente esta edição e suas inscrições?'))return;if(put(get().filter(z=>z.id!==x.id)))window.renderInscricoes()};
-window.pdfInscricoes=function(){
+window.pdfInscricoes=function(acao="baixar"){
   const x=chosen();if(!x)return;
   const participants=x.participants||[];
   const perPage=23,totalPages=Math.max(1,Math.ceil(participants.length/perPage));
@@ -1950,7 +1985,10 @@ window.pdfInscricoes=function(){
   try{
     const pdf=makeSimplePDF(pages);
     const filename=`GOW_Inscritos_${String(x.liga||'Liga').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_')}_${String(x.edicao||'Edicao').replace(/[^a-zA-Z0-9]+/g,'_')}.pdf`;
-    downloadFile(new File([pdf],filename,{type:'application/pdf'}));
+    const file=new File([pdf],filename,{type:'application/pdf'});
+    if(acao==='visualizar')visualizarPdfSparta(file);
+    else if(acao==='compartilhar')compartilharPdfSparta(file);
+    else downloadFile(file);
     if(typeof toast==='function')toast('PDF dos participantes baixado!');
   }catch(err){console.error('Falha ao baixar PDF da liga',err);alert('Nao foi possivel baixar o PDF. Tente novamente.');}
 };
@@ -1959,7 +1997,7 @@ window.pdfInscricoes=function(){
 <script>
 /* Sorteio por edicao: armazena somente clubes e resultados, sem alterar inscricoes. */
 (function(){
-const K='gow_sorteio_times_v1',I='gow_inscricoes_ligas_v1',A='THE GHOSTS OF SPARTA',B='THE GHOSTS OF SPARTA B';
+const H='gow_sorteio_historico_v1',K='gow_sorteio_times_v1',I='gow_inscricoes_ligas_v1',A='THE GHOSTS OF SPARTA',B='THE GHOSTS OF SPARTA B';
 const e=id=>document.getElementById(id),safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const read=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return []}};
 const store=()=>{try{return JSON.parse(localStorage.getItem(K)||'{}')}catch{return {}}};
@@ -1970,11 +2008,52 @@ const validTeams=()=>e('sortTimes').value.split(/\r?\n/).map(x=>x.trim()).filter
 function unique(items){return new Set(items.map(normalize)).size===items.length;}
 function saved(x){return store()[x.id]||{teams:[],draw:[]};}
 function commit(x,data){const all=store();all[x.id]=data;localStorage.setItem(K,JSON.stringify(all));}
+const historico=()=>read(H);
+function guardarHistorico(x,d){
+ const lista=historico();
+ lista.unshift({id:String(Date.now())+'-'+Math.random().toString(36).slice(2,8),ligaId:String(x.id),liga:x.liga,edicao:x.edicao,date:d.date,draw:d.draw.map(p=>({...p}))});
+ try{localStorage.setItem(H,JSON.stringify(lista));}
+ catch(err){alert('Não foi possível salvar o histórico. Verifique o espaço do navegador.');console.error(err);}
+}
+window.excluirSorteioHistorico=function(id){
+ if(!requireAdmin())return;
+ if(!confirm('Excluir este sorteio do histórico?'))return;
+ localStorage.setItem(H,JSON.stringify(historico().filter(x=>x.id!==id)));
+ renderHistoricoSorteios();
+};
+window.abrirSorteioHistorico=function(id,acao){
+ const item=historico().find(x=>x.id===id);if(!item)return;
+ if(acao==='detalhes'){
+  const linhas=item.draw.map((p,i)=>(i+1)+'. '+p.nick+' — '+p.team).join('\n');
+  alert(item.liga+' — '+item.edicao+'\n'+new Date(item.date).toLocaleString('pt-BR')+'\n\n'+linhas);return;
+ }
+ const seletor=e('sortLiga'),antigo=seletor.value;
+ if(![...seletor.options].some(o=>o.value===item.ligaId)){alert('A edição desta liga não está mais cadastrada.');return;}
+ seletor.value=item.ligaId;
+ try{window.baixarPdfSorteio(acao,id);}finally{seletor.value=antigo;}
+};
+function renderHistoricoSorteios(){
+ const el=e('sortHistoricoLista');if(!el)return;
+ const lista=historico();
+ el.innerHTML=lista.length?lista.map(item=>`<article class="card" style="margin:8px 0">
+ <strong>${safe(item.liga)} — ${safe(item.edicao)}</strong>
+ <p class="muted">${safe(new Date(item.date).toLocaleString('pt-BR'))} • ${item.draw.length} treinadores</p>
+ <div class="card-actions">
+ <button class="btn small" onclick="abrirSorteioHistorico('${item.id}','detalhes')">📋 Consultar</button>
+ <button class="btn small" onclick="abrirSorteioHistorico('${item.id}','visualizar')">👁️ PDF</button>
+ <button class="btn small" onclick="abrirSorteioHistorico('${item.id}','baixar')">⬇️ Baixar</button>
+ <button class="btn small" onclick="abrirSorteioHistorico('${item.id}','compartilhar')">📲 WhatsApp</button>
+ <button class="btn danger small admin-only" onclick="excluirSorteioHistorico('${item.id}')">Excluir</button>
+ </div></article>`).join(''):'<p class="muted">Nenhum sorteio registrado ainda.</p>';
+}
 window.renderSorteioTimes=function(){const sel=e('sortLiga');if(!sel)return;const entries=read(I),old=sel.value;sel.innerHTML=entries.length?entries.map(x=>`<option value="${safe(x.id)}">${safe(x.liga)} — ${safe(x.edicao)}</option>`).join(''):'<option value="">Nenhuma liga criada</option>';if(entries.some(x=>x.id===old))sel.value=old;window.renderSorteioDetalhes();};
-window.renderSorteioDetalhes=function(){const x=selected(),info=e('sortInfo'),out=e('sortResultado'),input=e('sortTimes');if(!x){info.innerHTML='Crie uma edição na aba Inscrições das Ligas.';out.innerHTML='Nenhum sorteio.';input.value='';return;}const data=saved(x),people=x.participants||[];info.innerHTML=`<strong>${safe(x.liga)} — ${safe(x.edicao)}</strong><p class="muted">${people.length} treinador(es) confirmado(s) • ${x.closed?'Inscrições encerradas':'Inscrições abertas'} • ${data.teams.length} time(s) cadastrado(s)</p><div>${people.map(t=>`<div style="padding:5px 0;border-bottom:1px solid #7773">${safe(t.nick)} <small>— ${safe(group(t.group))}</small></div>`).join('')||'<p>Nenhum treinador inscrito.</p>'}</div>`;input.value=data.teams.join('\n');if(data.draw?.length){const changed=data.draw.length!==people.length||data.draw.some(t=>!people.some(p=>p.key===t.key));out.innerHTML=`<h3>🏆 Resultado do sorteio</h3>${changed?'<p style="color:#f6b34b">⚠️ A lista de inscritos mudou depois do sorteio. Faça um novo sorteio para atualizar.</p>':''}<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:9px">Treinador</th><th style="text-align:left;padding:9px">Grupo</th><th style="text-align:left;padding:9px">Time sorteado</th></tr></thead><tbody>${data.draw.map(t=>`<tr><td style="padding:9px;border-bottom:1px solid #7773">${safe(t.nick)}</td><td style="padding:9px;border-bottom:1px solid #7773">${safe(group(t.group))}</td><td style="padding:9px;border-bottom:1px solid #7773"><strong>${safe(t.team)}</strong></td></tr>`).join('')}</tbody></table></div><p class="muted">Sorteado em ${safe(new Date(data.date).toLocaleString('pt-BR'))}</p>`;}else out.innerHTML='<h3>Resultado</h3><p class="muted">Ainda não foi realizado nenhum sorteio nesta edição.</p>';};
+window.renderSorteioDetalhes=function(){renderHistoricoSorteios();const x=selected(),info=e('sortInfo'),out=e('sortResultado'),input=e('sortTimes');if(!x){info.innerHTML='Crie uma edição na aba Inscrições das Ligas.';out.innerHTML='Nenhum sorteio.';input.value='';return;}const data=saved(x),people=x.participants||[];info.innerHTML=`<strong>${safe(x.liga)} — ${safe(x.edicao)}</strong><p class="muted">${people.length} treinador(es) confirmado(s) • ${x.closed?'Inscrições encerradas':'Inscrições abertas'} • ${data.teams.length} time(s) cadastrado(s)</p><div>${people.map(t=>`<div style="padding:5px 0;border-bottom:1px solid #7773">${safe(t.nick)} <small>— ${safe(group(t.group))}</small></div>`).join('')||'<p>Nenhum treinador inscrito.</p>'}</div>`;input.value=data.teams.join('\n');if(data.draw?.length){const changed=data.draw.length!==people.length||data.draw.some(t=>!people.some(p=>p.key===t.key));out.innerHTML=`<h3>🏆 Resultado do sorteio</h3>${changed?'<p style="color:#f6b34b">⚠️ A lista de inscritos mudou depois do sorteio. Faça um novo sorteio para atualizar.</p>':''}<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:9px">Treinador</th><th style="text-align:left;padding:9px">Grupo</th><th style="text-align:left;padding:9px">Time sorteado</th></tr></thead><tbody>${data.draw.map(t=>`<tr><td style="padding:9px;border-bottom:1px solid #7773">${safe(t.nick)}</td><td style="padding:9px;border-bottom:1px solid #7773">${safe(group(t.group))}</td><td style="padding:9px;border-bottom:1px solid #7773"><strong>${safe(t.team)}</strong></td></tr>`).join('')}</tbody></table></div><p class="muted">Sorteado em ${safe(new Date(data.date).toLocaleString('pt-BR'))}</p>`;}else out.innerHTML='<h3>Resultado</h3><p class="muted">Ainda não foi realizado nenhum sorteio nesta edição.</p>';};
 window.salvarTimesSorteio=function(){if(!requireAdmin())return;const x=selected();if(!x)return alert('Escolha uma liga.');const teams=validTeams();if(!unique(teams))return alert('Existem nomes de times repetidos.');const d=saved(x);if(d.draw?.length&&JSON.stringify(teams)!==JSON.stringify(d.teams)&&!confirm('Alterar os times vai apagar o sorteio anterior. Continuar?'))return;if(JSON.stringify(teams)!==JSON.stringify(d.teams)){d.draw=[];d.date=null;}d.teams=teams;commit(x,d);window.renderSorteioDetalhes();alert('Times salvos!');};
-window.executarSorteioTimes=function(){if(!requireAdmin())return;const x=selected();if(!x)return alert('Escolha uma liga.');const people=x.participants||[],teams=validTeams();if(!people.length)return alert('A liga não possui treinadores confirmados.');if(teams.length!==people.length)return alert(`São ${people.length} treinadores e ${teams.length} times. As quantidades devem ser iguais.`);if(!unique(teams))return alert('Existem times repetidos.');const d=saved(x);if(d.draw?.length&&!confirm('Já existe um sorteio salvo. Deseja substituí-lo por outro?'))return;if(!confirm(`Sortear ${teams.length} times para ${people.length} treinadores de ${x.liga} — ${x.edicao}?`))return;const shuffled=[...teams];for(let i=shuffled.length-1;i>0;i--){const r=new Uint32Array(1);crypto.getRandomValues(r);const j=r[0]%(i+1);[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}d.teams=teams;d.draw=people.map((p,i)=>({key:p.key,nick:p.nick,group:group(p.group),team:shuffled[i]}));d.date=new Date().toISOString();commit(x,d);window.renderSorteioDetalhes();};
-window.baixarPdfSorteio=function(){const x=selected();if(!x)return alert('Escolha uma liga.');const d=saved(x);if(!d.draw?.length)return alert('Realize o sorteio antes de gerar o PDF.');try{const W=595,H=842,per=22,pg=Math.max(1,Math.ceil(d.draw.length/per));const clean=v=>pdfSafeText(v).replace(/\?/g,'');const pages=Array.from({length:pg},(_,p)=>{const c=[],rect=(x,y,w,h,color)=>c.push(`${color} rg ${x} ${H-y-h} ${w} ${h} re f`),txt=(x,y,size,t,b=false,color='0.04 0.12 0.24')=>c.push(`${color} rg BT /F${b?2:1} ${size} Tf ${x} ${H-y} Td (${clean(t)}) Tj ET`),frame=(x,y,w,h,lw)=>c.push(`0.87 0.06 0.10 RG ${lw} w ${x} ${H-y} ${w} ${-h} re S`);rect(0,0,W,H,'1 1 1');rect(25,24,545,91,'0.035 0.10 0.20');rect(25,24,7,91,'0.87 0.09 0.13');txt(150,58,19,'THE GHOSTS OF SPARTA',true,'1 1 1');txt(150,85,11,'SORTEIO OFICIAL DOS TIMES',true,'1 0.83 0.24');txt(475,101,9,`PAG. ${p+1}/${pg}`,true,'1 1 1');txt(32,151,17,`${x.liga} - ${x.edicao}`.slice(0,49),true);txt(32,175,10,`PARTICIPANTES: ${d.draw.length}  |  DATA: ${new Date(d.date).toLocaleDateString('pt-BR')}`,true);rect(25,199,545,35,'0.035 0.10 0.20');txt(38,222,10,'N.',true,'1 1 1');txt(73,222,10,'TREINADOR',true,'1 1 1');txt(260,222,10,'GRUPO',true,'1 1 1');txt(435,222,10,'TIME',true,'1 1 1');d.draw.slice(p*per,(p+1)*per).forEach((t,i)=>{const y=234+i*24;if(i%2)rect(25,y,545,24,'0.93 0.95 0.98');txt(38,y+16,9,String(p*per+i+1),true,'0.78 0.08 0.13');txt(73,y+16,9,String(t.nick).slice(0,29),true);txt(260,y+16,7.2,group(t.group),false);txt(435,y+16,9,String(t.team).slice(0,21),true);});rect(25,773,545,43,'0.035 0.10 0.20');txt(130,800,10,'THE GHOSTS OF SPARTA - SORTEIO OFICIAL',true,'1 1 1');frame(9,9,577,824,3);frame(20,19,555,803,1.3);return {content:c.join('\n'),images:[{name:'OfficialCrest',dataUrl:SPARTA_OFFICIAL_CREST_JPG,pixelWidth:480,pixelHeight:449,x:42,y:H-105,w:76,h:76}]};});const pdf=makeSimplePDF(pages),slug=v=>String(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_');downloadFile(new File([pdf],`GOW_Sorteio_${slug(x.liga)}_${slug(x.edicao)}.pdf`,{type:'application/pdf'}));}catch(err){console.error(err);alert('Erro ao gerar o PDF do sorteio.');}};
+window.executarSorteioTimes=function(){if(!requireAdmin())return;const x=selected();if(!x)return alert('Escolha uma liga.');const people=x.participants||[],teams=validTeams();if(!people.length)return alert('A liga não possui treinadores confirmados.');if(teams.length!==people.length)return alert(`São ${people.length} treinadores e ${teams.length} times. As quantidades devem ser iguais.`);if(!unique(teams))return alert('Existem times repetidos.');const d=saved(x);if(d.draw?.length&&!confirm('Já existe um sorteio salvo. Deseja substituí-lo por outro?'))return;if(!confirm(`Sortear ${teams.length} times para ${people.length} treinadores de ${x.liga} — ${x.edicao}?`))return;const shuffled=[...teams];for(let i=shuffled.length-1;i>0;i--){const r=new Uint32Array(1);crypto.getRandomValues(r);const j=r[0]%(i+1);[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}d.teams=teams;d.draw=people.map((p,i)=>({key:p.key,nick:p.nick,group:group(p.group),team:shuffled[i]}));d.date=new Date().toISOString();commit(x,d);guardarHistorico(x,d);window.renderSorteioDetalhes();renderHistoricoSorteios();};
+window.baixarPdfSorteio=function(acao="baixar",historicoId){const x=selected();if(!x)return alert('Escolha uma liga.');const registro=historicoId?historico().find(v=>v.id===historicoId):null;const d=registro||saved(x);if(!d.draw?.length)return alert('Realize o sorteio antes de gerar o PDF.');try{const W=595,H=842,per=22,pg=Math.max(1,Math.ceil(d.draw.length/per));const clean=v=>pdfSafeText(v).replace(/\?/g,'');const pages=Array.from({length:pg},(_,p)=>{const c=[],rect=(x,y,w,h,color)=>c.push(`${color} rg ${x} ${H-y-h} ${w} ${h} re f`),txt=(x,y,size,t,b=false,color='0.04 0.12 0.24')=>c.push(`${color} rg BT /F${b?2:1} ${size} Tf ${x} ${H-y} Td (${clean(t)}) Tj ET`),frame=(x,y,w,h,lw)=>c.push(`0.87 0.06 0.10 RG ${lw} w ${x} ${H-y} ${w} ${-h} re S`);rect(0,0,W,H,'1 1 1');rect(25,24,545,91,'0.035 0.10 0.20');rect(25,24,7,91,'0.87 0.09 0.13');txt(150,58,19,'THE GHOSTS OF SPARTA',true,'1 1 1');txt(150,85,11,'SORTEIO OFICIAL DOS TIMES',true,'1 0.83 0.24');txt(475,101,9,`PAG. ${p+1}/${pg}`,true,'1 1 1');txt(32,151,17,`${x.liga} - ${x.edicao}`.slice(0,49),true);txt(32,175,10,`PARTICIPANTES: ${d.draw.length}  |  DATA: ${new Date(d.date).toLocaleDateString('pt-BR')}`,true);rect(25,199,545,35,'0.035 0.10 0.20');txt(38,222,10,'N.',true,'1 1 1');txt(73,222,10,'TREINADOR',true,'1 1 1');txt(260,222,10,'GRUPO',true,'1 1 1');txt(435,222,10,'TIME',true,'1 1 1');d.draw.slice(p*per,(p+1)*per).forEach((t,i)=>{const y=234+i*24;if(i%2)rect(25,y,545,24,'0.93 0.95 0.98');txt(38,y+16,9,String(p*per+i+1),true,'0.78 0.08 0.13');txt(73,y+16,9,String(t.nick).slice(0,29),true);txt(260,y+16,7.2,group(t.group),false);txt(435,y+16,9,String(t.team).slice(0,21),true);});rect(25,773,545,43,'0.035 0.10 0.20');txt(130,800,10,'THE GHOSTS OF SPARTA - SORTEIO OFICIAL',true,'1 1 1');frame(9,9,577,824,3);frame(20,19,555,803,1.3);return {content:c.join('\n'),images:[{name:'OfficialCrest',dataUrl:SPARTA_OFFICIAL_CREST_JPG,pixelWidth:480,pixelHeight:449,x:42,y:H-105,w:76,h:76}]};});const pdf=makeSimplePDF(pages),slug=v=>String(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'_');const file=new File([pdf],`GOW_Sorteio_${slug(x.liga)}_${slug(x.edicao)}.pdf`,{type:'application/pdf'});
+if(acao==='visualizar')visualizarPdfSparta(file);
+else if(acao==='compartilhar')compartilharPdfSparta(file);
+else downloadFile(file);}catch(err){console.error(err);alert('Erro ao gerar o PDF do sorteio.');}};
 })();
 </script>
 <style>
