@@ -475,7 +475,92 @@ function definirResultadoBatalha(id,resultado){
  try{localStorage.setItem('gow_battle_lineups',JSON.stringify(all));renderLineups();toast('Resultado da batalha salvo.');}
  catch(err){console.error(err);alert('Não foi possível salvar o resultado. Verifique o espaço disponível.');}
 }
-function lineupCard(x){const num=String(x.number||0);const title=num?`Alinhamento ${num.padStart(2,'0')}`:(x.name||'Alinhamento');return `<article class="card"><div><strong>${esc(title)}</strong><div class="muted">${esc(x.group||'')} • ${(x.players||[]).length}/5 treinadores${x.date?` • ${esc(x.date)}`:''}</div></div><div style="margin-top:12px"><label style="display:block;margin-bottom:6px"><b>Resultado da batalha</b></label><select class="input" aria-label="Resultado da batalha" onchange="definirResultadoBatalha('${String(x.id)}',this.value)"><option value="" ${!x.battleResult?'selected':''}>⏳ Não informado</option><option value="vitoria" ${x.battleResult==='vitoria'?'selected':''}>🏆 Vitória</option><option value="derrota" ${x.battleResult==='derrota'?'selected':''}>❌ Derrota</option></select><div class="muted" style="margin-top:8px">${resultadoBatalhaLabel(x.battleResult)}</div></div><div class="card-actions"><button class="btn small" onclick="gerarPDFResultadoBatalha('${String(x.id)}','visualizar')">👁️ Resultado PDF</button><button class="btn small" onclick="gerarPDFResultadoBatalha('${String(x.id)}','baixar')">⬇️ Baixar resultado</button><button class="btn small" onclick="gerarPDFResultadoBatalha('${String(x.id)}','compartilhar')">📲 WhatsApp resultado</button><button class="btn small" onclick="selectLineup('${String(x.id)}')">📋 Abrir</button><button class="btn small" onclick="editLineup('${String(x.id)}')">✏️ Editar</button><button class="btn small" onclick="viewLineupPDF('${String(x.id)}')">👁️ Visualizar PDF</button><button class="btn small" onclick="shareLineupPDF('${String(x.id)}')">📤 Compartilhar PDF</button><button class="btn primary small" onclick="downloadLineupPDF('${String(x.id)}')">⬇️ Baixar PDF</button><button class="btn danger small" onclick="deleteLineup('${String(x.id)}')">🗑️ Excluir</button></div></article>`;}
+function spartaScoreSet(id,index,value){
+ const all=loadJSON('gow_battle_lineups',[]);
+ const x=all.find(item=>String(item.id)===String(id));
+ if(!x||!Array.isArray(x.players)||!x.players[index]){
+  toast('Alinhamento não encontrado.');return;
+ }
+ if(value==='')delete x.players[index].battleScore;
+ else{
+  const n=Number(value);
+  if(!Number.isInteger(n)||n<0||n>30){toast('Selecione de 0 a 30 pontos.');return;}
+  x.players[index].battleScore=n;
+ }
+ try{
+  // Usa o mesmo método de gravação que já funciona no resultado da batalha.
+  localStorage.setItem('gow_battle_lineups',JSON.stringify(all));
+  const saved=loadJSON('gow_battle_lineups',[]).find(item=>String(item.id)===String(id));
+  if(!saved||saved.players[index].battleScore!==x.players[index].battleScore){
+   toast('Não foi possível confirmar a pontuação salva.');return;
+  }
+  renderLineups();
+  toast(value===''?'Pontuação removida.':'Pontuação salva: '+value+' / 30 pontos!');
+ }catch(err){
+  console.error('Erro ao salvar pontuação:',err);
+  alert('Não foi possível salvar a pontuação. Verifique o armazenamento do navegador.');
+ }
+}
+function spartaScoreEntries(){
+ const rows=[];
+ loadJSON('gow_battle_lineups',[]).forEach(x=>(x.players||[]).forEach((p,i)=>{
+  if(p.battleScore===undefined||p.battleScore===null||p.battleScore==='')return;
+  const score=Number(p.battleScore);if(!Number.isInteger(score)||score<0||score>30)return;
+  rows.push({group:normalizeLineupGroup(x),trainer:String(p.trainer||'-'),score,
+   lineup:String(x.number||x.name||'-'),date:String(x.date||''),id:String(x.id),captain:!!p.isCaptain});
+ }));return rows;
+}
+function spartaScoreStats(){
+ const map=new Map();
+ spartaScoreEntries().forEach(r=>{
+  const k=r.group+'|'+r.trainer.trim().toLocaleLowerCase('pt-BR');
+  if(!map.has(k))map.set(k,{name:r.trainer,group:r.group,rows:[],total:0});
+  const t=map.get(k);t.rows.push(r);t.total+=r.score;
+ });
+ return [...map.values()].map(t=>({...t,avg:t.total/t.rows.length})).sort((a,b)=>b.avg-a.avg||b.total-a.total);
+}
+function renderSpartaScores(){
+ const el=document.getElementById('spartaScoresDashboard');if(!el)return;
+ const stats=spartaScoreStats();
+ el.innerHTML=stats.length?stats.map((t,i)=>`<article class="card" style="padding:14px"><strong>${i+1}º ${esc(t.name)}</strong><div class="muted">${esc(t.group)} • ${t.rows.length} batalha(s)</div><b>Média: ${t.avg.toFixed(1).replace('.',',')} / 30</b> • Total: ${t.total} pontos<div class="muted">${t.rows.map(r=>`Alinhamento ${esc(r.lineup)}: ${r.score} pontos`).join(' • ')}</div></article>`).join(''):'<div class="empty">Escolha os pontos (0 a 30) nos alinhamentos para iniciar o histórico.</div>';
+}
+function spartaScoresPDF(id){
+ const rows=spartaScoreEntries().filter(r=>!id||r.id===String(id));
+ const stats=spartaScoreStats();
+ const lines=[];
+ if(id){
+  const x=loadJSON('gow_battle_lineups',[]).find(x=>String(x.id)===String(id));
+  lines.push('PONTUACAO DO ALINHAMENTO',`Grupo: ${x?normalizeLineupGroup(x):'-'}`,`Alinhamento: ${x?.number||'-'}  Data: ${x?.date||'-'}`,'');
+  (x?.players||[]).forEach((p,i)=>lines.push(`${i+1}. ${p.trainer||'-'} ${p.isCaptain?'(C)':''} - ${p.battleScore===undefined?'Nao informado':p.battleScore+' / 30'} pontos`));
+ }else{
+  lines.push('EVOLUCAO DOS TREINADORES','Historico de pontos por alinhamento','');
+  stats.forEach((t,i)=>{
+   lines.push(`${i+1}. ${t.name} - ${t.group}`,`Total: ${t.total}  Media: ${t.avg.toFixed(1)}  Batalhas: ${t.rows.length}`);
+   t.rows.forEach(r=>lines.push(`   Alinhamento ${r.lineup} (${r.date}): ${r.score}/30`));lines.push('');
+  });
+ }
+ if(!rows.length&&!id)lines.push('Nenhuma pontuacao registrada ainda.');
+ const per=32,pages=[],n=Math.max(1,Math.ceil(lines.length/per));
+ const t=(x,y,size,value,b=false,color='0.10 0.14 0.20')=>`${color} rg BT /F${b?2:1} ${size} Tf 1 0 0 1 ${x} ${y} Tm (${pdfSafeText(value)}) Tj ET`;
+ for(let p=0;p<n;p++){
+  const l=['1 1 1 rg 0 0 595 842 re f','0.11 0.13 0.19 rg 0 748 595 94 re f'];
+  l.push(t(34,799,19,'THE GHOSTS OF SPARTA',true,'1 1 1'));
+  l.push(t(34,772,12,'RELATORIO DE PONTOS DE BATALHA',true,'1 1 1'));
+  lines.slice(p*per,(p+1)*per).forEach((v,i)=>l.push(t(36,716-i*20,i===0?12:10,String(v).slice(0,88),i===0)));
+  l.push(t(35,34,9,`Gerado em ${new Date().toLocaleDateString('pt-BR')}  -  Pagina ${p+1}/${n}`));
+  pages.push({content:l.join('\n'),images:[]});
+ }
+ return makeSimplePDF(pages);
+}
+function spartaScoresPDFAction(id,action){
+ const file=new File([spartaScoresPDF(id)],`Sparta_Pontos_${id?'Alinhamento_'+id:'Evolucao'}.pdf`,{type:'application/pdf'});
+ if(action==='download')downloadFile(file);
+ else if(action==='share'){
+  if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]}))navigator.share({files:[file],title:'Relatorio de pontos'}).catch(()=>{});
+  else {downloadFile(file);toast('PDF baixado. Envie o arquivo pelo WhatsApp.');}
+ }else{const url=URL.createObjectURL(file);const w=window.open(url,'_blank');if(!w)toast('Permita pop-ups para visualizar o PDF.');setTimeout(()=>URL.revokeObjectURL(url),120000);}
+}
+function lineupCard(x){const num=String(x.number||0);const title=num?`Alinhamento ${num.padStart(2,'0')}`:(x.name||'Alinhamento');return `<article class="card"><div><strong>${esc(title)}</strong><div class="muted">${esc(x.group||'')} • ${(x.players||[]).length}/5 treinadores${x.date?` • ${esc(x.date)}`:''}</div></div><div style="margin-top:12px"><label style="display:block;margin-bottom:6px"><b>Resultado da batalha</b></label><select class="input" aria-label="Resultado da batalha" onchange="definirResultadoBatalha('${String(x.id)}',this.value)"><option value="" ${!x.battleResult?'selected':''}>⏳ Não informado</option><option value="vitoria" ${x.battleResult==='vitoria'?'selected':''}>🏆 Vitória</option><option value="derrota" ${x.battleResult==='derrota'?'selected':''}>❌ Derrota</option></select><div class="muted" style="margin-top:8px">${resultadoBatalhaLabel(x.battleResult)}</div></div><div style="margin:12px 0"><strong>🎯 Pontos desta batalha (0 a 30)</strong><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px;margin-top:8px">${(x.players||[]).map((p,i)=>`<label style="display:block;font-size:13px">${esc(p.trainer||'-')} ${p.isCaptain?'(C)':''}<select class="input" style="width:100%" aria-label="Pontos de ${esc(p.trainer||'treinador')}" onchange="spartaScoreSet('${String(x.id)}',${i},this.value)"><option value="" ${p.battleScore===undefined?'selected':''}>Não informado</option>${Array.from({length:31},(_,n)=>`<option value="${n}" ${Number(p.battleScore)===n&&p.battleScore!==undefined?'selected':''}>${n} pontos</option>`).join('')}</select></label>`).join('')}</div><div class="card-actions"><button class="btn small" type="button" onclick="spartaScoresPDFAction('${String(x.id)}','view')">👁️ PDF de pontos</button><button class="btn small" type="button" onclick="spartaScoresPDFAction('${String(x.id)}','download')">⬇️ Baixar pontos</button></div></div><div class="card-actions"><button class="btn small" onclick="gerarPDFResultadoBatalha('${String(x.id)}','visualizar')">👁️ Resultado PDF</button><button class="btn small" onclick="gerarPDFResultadoBatalha('${String(x.id)}','baixar')">⬇️ Baixar resultado</button><button class="btn small" onclick="gerarPDFResultadoBatalha('${String(x.id)}','compartilhar')">📲 WhatsApp resultado</button><button class="btn small" onclick="selectLineup('${String(x.id)}')">📋 Abrir</button><button class="btn small" onclick="editLineup('${String(x.id)}')">✏️ Editar</button><button class="btn small" onclick="viewLineupPDF('${String(x.id)}')">👁️ Visualizar PDF</button><button class="btn small" onclick="shareLineupPDF('${String(x.id)}')">📤 Compartilhar PDF</button><button class="btn primary small" onclick="downloadLineupPDF('${String(x.id)}')">⬇️ Baixar PDF</button><button class="btn danger small" onclick="deleteLineup('${String(x.id)}')">🗑️ Excluir</button></div></article>`;}
 function renderLineups(){
   const all=loadJSON('gow_battle_lineups',[]);
   const a=all.filter(x=>normalizeLineupGroup(x)==='THE GHOSTS OF SPARTA').sort((x,y)=>(x.number||99)-(y.number||99));
@@ -483,6 +568,7 @@ function renderLineups(){
   const elA=$('lineupsListA'),elB=$('lineupsListB');
   if(elA)elA.innerHTML=a.length?a.map(lineupCard).join(''):'<div class="empty">Nenhum alinhamento criado para este grupo.</div>';
   if(elB)elB.innerHTML=b.length?b.map(lineupCard).join(''):'<div class="empty">Nenhum alinhamento criado para este grupo.</div>';
+  renderSpartaScores();
 }
 function clearLineupDraft(){if(!lineupDraft.length)return;if(!confirm('Limpar todos os treinadores deste alinhamento?'))return;lineupDraft=[];currentLineupId='';renderLineupDraft();updateCloseLineupButton();toast('Alinhamento atual limpo.');}
 function getCurrentLineup(){const group=$('luGroup')?.value||'THE GHOSTS OF SPARTA';return {id:currentLineupId||'temp',name:$('luName')?.value.trim()||'Alinhamento de batalha',date:$('luDate')?.value.trim()||new Date().toLocaleDateString('pt-BR'),group,players:lineupDraft.filter(p=>p.group===group)};}
